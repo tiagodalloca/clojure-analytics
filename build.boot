@@ -1,11 +1,12 @@
 (set-env!
   :source-paths #{"src"}
-  :resource-paths #{"templates"}
   :target #{"target"}
   :dependencies    '[ [org.clojure/clojure "1.8.0"]
                       [compojure "1.5.1"]
                       [ring "1.5.0"]
-                      [enlive "1.1.6"]])
+                      [enlive "1.1.6"]
+                      [clj-http "3.2.0"]
+                      [org.clojure/data.json "0.2.6"]])
 
 (deftask dev
   "Profile setup for development."
