@@ -8,7 +8,8 @@
   ; (require '[clojure.repl :as repl])
   (require '[clojure.data.json :as json])
   (require '[clj-http.client :as client])
-  (use 'clojure-analytics.core))
+  (use 'clojure-analytics.core)
+  (use 'clojure-analytics.main))
 
 (defn reset []
-  (tnr/refresh :after 'user/start))
+  (tnr/refresh :before 'user/start))

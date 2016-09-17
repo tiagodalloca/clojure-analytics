@@ -6,7 +6,8 @@
                       [ring "1.5.0"]
                       [enlive "1.1.6"]
                       [clj-http "3.2.0"]
-                      [org.clojure/data.json "0.2.6"]])
+                      [org.clojure/data.json "0.2.6"]
+                      [org.clojure/tools.cli "0.3.5"]])
 
 (deftask dev
   "Profile setup for development."
@@ -18,3 +19,15 @@
                                                 '[proto-repl "0.3.1"])
     :source-paths #(into % ["dev"]))
   identity)
+
+(deftask build
+  "This is used for creating an optimized uberjar "
+  []
+  (comp
+   (aot :all true)
+   (uber :exclude #{#"(?i)^META-INF/[^/]*\.(MF|SF|RSA|DSA)$"
+                    #"(?i)^META-INF\\[^/]*\.(MF|SF|RSA|DSA)$"
+                    #"(?i)^META-INF/INDEX.LIST$"
+                    #"(?i)^META-INF\\INDEX.LIST$"})
+   (jar :main 'clojure-analytics.main)
+   (target)))
