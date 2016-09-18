@@ -13,9 +13,7 @@
 
 (defn informacoes-relevantes
   [weather]
-  { "Cidade" (:name weather)
-    "País" (:country (:sys weather))
-    "Mínima" (str (:temp_min (:main weather)) "ºC")
+  { "Mínima" (str (:temp_min (:main weather)) "ºC")
     "Máxima" (str (:temp_max (:main weather)) "ºC")
     "Temperatura atual" (str (:temp (:main weather)) "ºC")
     "Humidade" (str (:humidity (:main weather) ) "%")
@@ -33,23 +31,34 @@
   (let
     [ {:keys [options arguments errors summary]}
       (cli/parse-opts args cli-options)
-      {:keys [local]}
-      options]
-    ; (->>
-    ;   (if-not (empty? local)
-    ;     (core/consultar-tempo local)
-    ;     (core/consultar-tempo-aqui))
-    ;   (informacoes-relevantes)
-    ;   (formatar)
-    ;   (println))))
-    (if-not (empty? local)
-      (let
-        [ local (core/consultar-local)
-          f-tempo-relevante (future
-                              (->>
-                                (core/consultar-tempo (:loc local))
-                                (informacoes-relevantes)))
-          f-desc (future
+      lat-lon
+      (:local options)
+      local-ip
+      (if (empty? lat-lon)
+        (core/consultar-local)
+        nil)
+      cidade
+      (if (nil? local-ip)
+        (core/cidade-lat-lon (core/consultar-lat-lon lat-lon))
+        (:city local-ip))
+      lat-lon
+      (if (nil? local-ip)
+        (string/join "," lat-lon)
+        (:loc local-ip))
+      f-tempo-relevante (future
+                          (->>
+                            (core/consultar-tempo lat-lon)
+                            (informacoes-relevantes)))
+      f-desc (future
+                (when-not (nil? cidade)
                   (->>
-                    (core/consultar-wiki (:city local))
-                    ()))]))))
+                    (core/consultar-wiki cidade)
+                    (array-map "Mais informações"))))
+      cidade
+      (if (nil? cidade)
+        "(não identificada)"
+        cidade)]
+    (->
+      (conj @f-tempo-relevante {"Cidade" cidade} @f-desc)
+      (formatar)
+      (println))))

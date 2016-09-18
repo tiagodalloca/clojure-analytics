@@ -1,7 +1,8 @@
 (ns clojure-analytics.core
   (:require
     [clj-http.client :as client]
-    [clojure.data.json :as json]))
+    [clojure.data.json :as json]
+    [clojure.string :as string]))
 
 (defn- url-args
   [args]
@@ -11,14 +12,14 @@
 
 (defn consulta
   ( [onde]
-    (->>
+    (->
       (str onde)
-      (client/get)
+      (client/get {:as :auto})
       (:body)))
   ( [onde args]
-    (->>
+    (->
       (str onde "?" (url-args args))
-      (client/get)
+      (client/get {:as :auto})
       (:body))))
 
 (defn consulta-json
@@ -52,27 +53,56 @@
           :appid "effecbe8e48b82f1d0aed912553d1a75"})]
     tempo))
 
+(defn consultar-lat-lon
+  [lat-lon]
+  (consulta-json
+    "http://www.mapquestapi.com/geocoding/v1/reverse"
+    { :location (string/join "," lat-lon)
+      :key "elQO3jwiKxEGzcGkqD0hY5yMDzaRrCxd"}))
+
+(defn cidade-lat-lon
+  [lat-lon-response]
+  (if (empty? (:results lat-lon-response))
+    nil
+    (->
+      (:results lat-lon-response)
+      (first)
+      (:locations)
+      (first)
+      (:adminArea5))))
+
 (defn consultar-tempo-aqui
   []
   (let
     [ local
       (consultar-local)
       lat-lon
-      (clojure.string/split (:loc local) #",")
+      (string/split (:loc local) #",")
       tempo
       (consultar-tempo lat-lon)]
     tempo))
 
 (defn consultar-wiki
   [topico]
-  (consulta
-    "https://pt.wikipedia.org/w/api.php"
-    { :format "json"
-      :action "query"
-      :prop "extracts"
-      :exintro ""
-      :explaintext ""
-      :titles (str topico)}))
+  (let
+    [ feio
+      (->
+        (consulta
+          "https://en.wikipedia.org/w/api.php"
+          { :format "json"
+            :action "query"
+            :prop "extracts"
+            :exintro ""
+            :utf8 ""
+            :explaintext ""
+            :titles (str topico)})
+        ; (.getBytes "UTF-8")
+        ; (String. "UTF-8")
+        (string/split #"\"extract\":\"")
+        (second))]
+    (if (re-find #"(\\n)" feio)
+      (first (string/split feio #"(\\n)"))
+      (string/replace feio "\"}}}}" ""))))
 
 (defn notificar-quando-acabar
   [task msgInicio msgFim]
