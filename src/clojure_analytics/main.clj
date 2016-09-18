@@ -35,10 +35,21 @@
       (cli/parse-opts args cli-options)
       {:keys [local]}
       options]
-    (->>
-      (if-not (empty? local)
-        (core/consultar-tempo local)
-        (core/consultar-tempo-aqui))
-      (informacoes-relevantes)
-      (formatar)
-      (println))))
+    ; (->>
+    ;   (if-not (empty? local)
+    ;     (core/consultar-tempo local)
+    ;     (core/consultar-tempo-aqui))
+    ;   (informacoes-relevantes)
+    ;   (formatar)
+    ;   (println))))
+    (if-not (empty? local)
+      (let
+        [ local (core/consultar-local)
+          f-tempo-relevante (future
+                              (->>
+                                (core/consultar-tempo (:loc local))
+                                (informacoes-relevantes)))
+          f-desc (future
+                  (->>
+                    (core/consultar-wiki (:city local))
+                    ()))]))))

@@ -35,6 +35,10 @@
   [& args]
   (future (apply consulta args)))
 
+(defn consultar-local
+  []
+  (consulta-json "http://ipinfo.io/json"))
+
 (defn consultar-tempo
   [lat-lon]
   (let
@@ -52,12 +56,23 @@
   []
   (let
     [ local
-      (consulta-json "http://ipinfo.io/json")
+      (consultar-local)
       lat-lon
       (clojure.string/split (:loc local) #",")
       tempo
       (consultar-tempo lat-lon)]
     tempo))
+
+(defn consultar-wiki
+  [topico]
+  (consulta
+    "https://pt.wikipedia.org/w/api.php"
+    { :format "json"
+      :action "query"
+      :prop "extracts"
+      :exintro ""
+      :explaintext ""
+      :titles (str topico)}))
 
 (defn notificar-quando-acabar
   [task msgInicio msgFim]
@@ -92,3 +107,6 @@
 ;         :units "metric"
 ;         :appid "effecbe8e48b82f1d0aed912553d1a75"})]
 ;   tempo)
+
+; (:extract (:29868 (:pages (:query (consultar-wiki "São Paulo")))))
+; (consultar-wiki "São Paulo")
