@@ -5,10 +5,13 @@
     [clojure.string :as string]
     [clojure.spec :as s]))
 
-(defn- url-args
-  [args]
+(s/def ::url-map-args (s/cat :map (s/map-of keyword? string?)))
+(s/fdef clojure-analytics.core/url-args
+  :args (s/cat :m ::url-map-args))
+(defn url-args
+  [m]
   (let [asdf
-        (reduce #(str % (subs (str (key %2)) 1) "=" (val %2) "&") "" args)]
+        (reduce #(str % (subs (str (key %2)) 1) "=" (val %2) "&") "" m)]
     (subs asdf 0 (- (count asdf) 1))))
 
 
@@ -163,18 +166,18 @@
 ; (:extract (:29868 (:pages (:query (consultar-wiki "São Paulo")))))
 ; (consultar-wiki "São Paulo")
 
-(let
-  [ args
-    (->
-      { :format "json"
-        :action "query"
-        :prop "extracts"
-        :exintro ""
-        :utf8 ""
-        :explaintext ""
-        :titles (str 'Campinas)}
-      (url-args))]
-  (->
-    (str
-      "https://en.wikipedia.org/w/api.php?" args)
-    (slurp)))
+; (let
+;   [ args
+;     (->
+;       { :format "json"
+;         :action "query"
+;         :prop "extracts"
+;         :exintro ""
+;         :utf8 ""
+;         :explaintext ""
+;         :titles (str 'Campinas)}
+;       (url-args))]
+;   (->
+;     (str
+;       "https://en.wikipedia.org/w/api.php?" args)
+;     (slurp)))

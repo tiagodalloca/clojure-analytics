@@ -11,8 +11,7 @@
         :default []
         :parse-fn #(string/split % #",")]
     ["-c" "--city CITY_NAME" "O nome da cidade em inglês"
-        :default nil
-        :parse-fn #(str %)]
+        :default nil]
     ["-h" "--help" "Prints help"]])
 
 (defn informacoes-relevantes
@@ -32,9 +31,6 @@
 
 (defn print-informacoes
   [& {:keys [cidade lat-lon]}]
-  (assert (not (nil? cidade)))
-  (assert (not-empty cidade ""))
-  (assert (not-empty lat-lon))
   (let
     [ f-tempo-relevante
         (future
