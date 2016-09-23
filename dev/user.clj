@@ -5,7 +5,6 @@
 
 (defn start
   []
-  ; (require '[clojure.repl :as repl])
   (in-ns 'user)
   (require '[clojure.data.json :as json])
   (require '[clj-http.client :as client])

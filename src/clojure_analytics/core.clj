@@ -2,7 +2,8 @@
   (:require
     [clj-http.client :as client]
     [clojure.data.json :as json]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [clojure.spec :as s]))
 
 (defn- url-args
   [args]
@@ -10,17 +11,29 @@
         (reduce #(str % (subs (str (key %2)) 1) "=" (val %2) "&") "" args)]
     (subs asdf 0 (- (count asdf) 1))))
 
+
+(defn temNet?
+  []
+  true)
+
 (defn consulta
   ( [onde]
-    (->
-      (str onde)
-      (client/get {:as :auto})
-      (:body)))
+    (binding
+      [clj-http.core/*cookie-store*
+        (clj-http.cookies/cookie-store)]
+      (->
+        (str onde)
+        (client/get {:as :auto})
+        (:body))))
   ( [onde args]
     (->
-      (str onde "?" (url-args args))
-      (client/get {:as :auto})
-      (:body))))
+      (binding
+        [clj-http.core/*cookie-store*
+          (clj-http.cookies/cookie-store)]
+        (->
+          (str onde "?" (url-args args))
+          (client/get {:as :auto})
+          (:body))))))
 
 (defn consulta-json
   ( [onde]
@@ -41,17 +54,23 @@
   (consulta-json "http://ipinfo.io/json"))
 
 (defn consultar-tempo
-  [lat-lon]
-  (let
-    [ tempo
+  [& {:keys [lat-lon cidade]}]
+  (if (nil? lat-lon)
+    (if (nil? cidade)
+      nil
       (consulta-json
         "http://api.openweathermap.org/data/2.5/weather"
-        { :lat (get lat-lon 0)
-          :lon (get lat-lon 1)
+        { :q (str cidade)
           :lang "pt"
           :units "metric"
-          :appid "effecbe8e48b82f1d0aed912553d1a75"})]
-    tempo))
+          :appid "effecbe8e48b82f1d0aed912553d1a75"}))
+    (consulta-json
+      "http://api.openweathermap.org/data/2.5/weather"
+      { :lat (get lat-lon 0)
+        :lon (get lat-lon 1)
+        :lang "pt"
+        :units "metric"
+        :appid "effecbe8e48b82f1d0aed912553d1a75"})))
 
 (defn consultar-lat-lon
   [lat-lon]
@@ -85,21 +104,24 @@
 (defn consultar-wiki
   [topico]
   (let
-    [ feio
+    [
+      args
       (->
-        (consulta
-          "https://en.wikipedia.org/w/api.php"
-          { :format "json"
-            :action "query"
-            :prop "extracts"
-            :exintro ""
-            :utf8 ""
-            :explaintext ""
-            :titles (str topico)})
-        ; (.getBytes "UTF-8")
-        ; (String. "UTF-8")
-        (string/split #"\"extract\":\"")
-        (second))]
+        { :format "json"
+          :action "query"
+          :prop "extracts"
+          :exintro ""
+          :utf8 ""
+          :explaintext ""
+          :titles (str topico)}
+        (url-args))
+      feio
+        (->
+          (str
+            "https://en.wikipedia.org/w/api.php?" args)
+          (slurp)
+          (string/split #"\"extract\":\"")
+          (second))]
     (if (re-find #"(\\n)" feio)
       (first (string/split feio #"(\\n)"))
       (string/replace feio "\"}}}}" ""))))
@@ -140,3 +162,19 @@
 
 ; (:extract (:29868 (:pages (:query (consultar-wiki "São Paulo")))))
 ; (consultar-wiki "São Paulo")
+
+(let
+  [ args
+    (->
+      { :format "json"
+        :action "query"
+        :prop "extracts"
+        :exintro ""
+        :utf8 ""
+        :explaintext ""
+        :titles (str 'Campinas)}
+      (url-args))]
+  (->
+    (str
+      "https://en.wikipedia.org/w/api.php?" args)
+    (slurp)))

@@ -2,13 +2,17 @@
   (:gen-class)
   (:require [clojure-analytics.core :as core]
             [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.spec :as s]))
+
 
 (def cli-options
   [ ["-l" "--local LAT,LON" "Latitude,Longitude separadas por \",\""
         :default []
         :parse-fn #(string/split % #",")]
-
+    ["-c" "--city CITY_NAME" "O nome da cidade em inglês"
+        :default nil
+        :parse-fn #(str %)]
     ["-h" "--help" "Prints help"]])
 
 (defn informacoes-relevantes
@@ -26,34 +30,25 @@
       (str acc k ": " v "\n"))
     "" mapao))
 
-(defn -main
-  [& args]
+(defn print-informacoes
+  [& {:keys [cidade lat-lon]}]
+  (assert (not (nil? cidade)))
+  (assert (not-empty cidade ""))
+  (assert (not-empty lat-lon))
   (let
-    [ {:keys [options arguments errors summary]}
-      (cli/parse-opts args cli-options)
-      lat-lon
-      (:local options)
-      local-ip
-      (if (empty? lat-lon)
-        (core/consultar-local)
-        nil)
-      cidade
-      (if (nil? local-ip)
-        (core/cidade-lat-lon (core/consultar-lat-lon lat-lon))
-        (:city local-ip))
-      lat-lon
-      (if (nil? local-ip)
-        (string/join "," lat-lon)
-        (:loc local-ip))
-      f-tempo-relevante (future
-                          (->>
-                            (core/consultar-tempo lat-lon)
-                            (informacoes-relevantes)))
-      f-desc (future
-                (when-not (nil? cidade)
-                  (->>
-                    (core/consultar-wiki cidade)
-                    (array-map "Mais informações"))))
+    [ f-tempo-relevante
+        (future
+          (let [consulta-do-tempo
+                (if (nil? lat-lon)
+                  (core/consultar-tempo :cidade cidade)
+                  (core/consultar-tempo :lat-lon lat-lon))]
+            (informacoes-relevantes consulta-do-tempo)))
+      f-desc
+      (future
+        (when-not (nil? cidade)
+          (->>
+            (core/consultar-wiki cidade)
+            (array-map "Mais informações"))))
       cidade
       (if (nil? cidade)
         "(não identificada)"
@@ -62,3 +57,31 @@
       (conj @f-tempo-relevante {"Cidade" cidade} @f-desc)
       (formatar)
       (println))))
+
+(defn -main
+  [& args]
+  (let
+    [ {:keys [options arguments errors summary]}
+      (parse-opts args cli-options)
+      cidade
+      (:city options)
+      lat-lon
+      (:local options)]
+    (if (nil? cidade)
+      (let
+        [ local-ip
+          (if (empty? lat-lon)
+            (core/consultar-local)
+            nil)
+          lat-lon
+          (if (nil? local-ip)
+            lat-lon
+            (string/split (:loc local-ip) #","))
+          cidade
+            (->
+              (core/consultar-lat-lon lat-lon)
+              (core/cidade-lat-lon))]
+        (print-informacoes :lat-lon lat-lon :cidade cidade))
+      (if (empty? lat-lon)
+        (print-informacoes :cidade cidade)
+        (print-informacoes :lat-lon lat-lon :cidade cidade)))))
