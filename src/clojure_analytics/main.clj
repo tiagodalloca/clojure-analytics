@@ -81,5 +81,3 @@
       (if (empty? lat-lon)
         (print-informacoes :cidade cidade)
         (print-informacoes :lat-lon lat-lon :cidade cidade)))))
-
-(print-informacoes :cidade "New York")

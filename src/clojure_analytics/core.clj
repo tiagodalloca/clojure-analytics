@@ -5,15 +5,15 @@
     [clojure.string :as string]
     [clojure.spec :as s]))
 
-(s/def ::url-map-args (s/cat :map (s/map-of keyword? string?)))
-(s/fdef clojure-analytics.core/url-args
-  :args (s/cat :m ::url-map-args))
 (defn url-args
   [m]
-  (let [asdf
-        (reduce #(str % (subs (str (key %2)) 1) "=" (val %2) "&") "" m)]
+  (let [argfy (fn [acc [k v]]
+                (if (keyword? k)
+                  (str acc (subs (str k) 1) "=" (string/replace v #" " "%20") "&")
+                  (str acc (str k) "=" (string/replace v #" " "%20") "&")))
+        asdf
+        (reduce argfy "" m)]
     (subs asdf 0 (- (count asdf) 1))))
-
 
 (defn temNet?
   []
