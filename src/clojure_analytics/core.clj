@@ -136,48 +136,4 @@
     (#(do
         (println (str msgFim))
         (println %))
-      (time @task))))
-
-; (let
-;   [ local
-;     (consulta-json "http://ipinfo.io/json")
-;     tempo
-;     (consulta-json
-;       (str
-;         "https://api.forecast.io/forecast/caa72c49303deca6b27c77d3feb9d27d/"
-;         (:loc local)))]
-;   tempo)
-
-; (let
-;   [ local
-;     (consulta-json "http://ipinfo.io/json")
-;     lat-lon
-;     (clojure.string/split (:loc local) #",")
-;     tempo
-;     (consulta-json
-;       "http://api.openweathermap.org/data/2.5/weather"
-;       { :lat (get lat-lon 0)
-;         :lon (get lat-lon 1)
-;         :lang "pt"
-;         :units "metric"
-;         :appid "effecbe8e48b82f1d0aed912553d1a75"})]
-;   tempo)
-
-; (:extract (:29868 (:pages (:query (consultar-wiki "São Paulo")))))
-; (consultar-wiki "São Paulo")
-
-; (let
-;   [ args
-;     (->
-;       { :format "json"
-;         :action "query"
-;         :prop "extracts"
-;         :exintro ""
-;         :utf8 ""
-;         :explaintext ""
-;         :titles (str 'Campinas)}
-;       (url-args))]
-;   (->
-;     (str
-;       "https://en.wikipedia.org/w/api.php?" args)
-;     (slurp)))
+     (time @task))))

@@ -1,3 +1,11 @@
+(require 'boot.repl)
+(swap! boot.repl/*default-dependencies*
+       concat '[[cider/cider-nrepl "0.13.0"]
+                [refactor-nrepl "2.2.0-SNAPSHOT"]])
+
+(swap! boot.repl/*default-middleware*
+       conj 'cider.nrepl/cider-middleware)
+
 (set-env!
   :source-paths #{"src"}
   :target #{"target"}
@@ -16,9 +24,14 @@
   (set-env!
     :init-ns 'user
     :dependencies (conj (get-env :dependencies) '[org.clojure/tools.namespace "0.2.10"]
-                                                '[proto-repl "0.3.1"]
                                                 '[org.clojure/test.check "0.9.0"])
     :source-paths #(into % ["dev"]))
+  (require 'boot.repl)
+  (swap! boot.repl/*default-dependencies*
+         concat '[[cider/cider-nrepl "0.13.0"]])
+
+  (swap! boot.repl/*default-middleware*
+         conj 'cider.nrepl/cider-middleware)
   identity)
 
 (deftask build
