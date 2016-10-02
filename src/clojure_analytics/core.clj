@@ -125,9 +125,11 @@
           (slurp)
           (string/split #"\"extract\":\"")
           (second))]
-    (if (re-find #"(\\n)" feio)
-      (first (string/split feio #"(\\n)"))
-      (string/replace feio "\"}}}}" ""))))
+    (if (empty? feio)
+      nil
+      (if (re-find #"(\\n)" feio)
+        (first (string/split feio #"(\\n)"))
+        (string/replace feio "\"}}}}" "")))))
 
 (defn notificar-quando-acabar
   [task msgInicio msgFim]

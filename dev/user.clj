@@ -1,6 +1,5 @@
 (ns user
   (:require [clojure.tools.namespace.repl :as tnr]
-            [proto-repl.saved-values]
             [clojure.repl :as repl]))
 
 (defn start

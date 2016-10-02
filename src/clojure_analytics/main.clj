@@ -31,6 +31,7 @@
 
 (defn print-informacoes
   [& {:keys [cidade lat-lon]}]
+  #break
   (let
     [ f-tempo-relevante
         (future
