@@ -32,7 +32,6 @@
 
 (defn print-informacoes
   [& {:keys [cidade lat-lon]}]
-  #break
   (let
     [ f-tempo-relevante
         (future
@@ -83,3 +82,55 @@
       (if (empty? lat-lon)
         (print-informacoes :cidade cidade)
         (print-informacoes :lat-lon lat-lon :cidade cidade)))))
+
+(defn print-informacoes-noThread
+  [& {:keys [cidade lat-lon]}]
+  (let
+    [ f-tempo-relevante
+     (let [consulta-do-tempo
+           (if (nil? lat-lon)
+             (core/consultar-tempo :cidade cidade)
+             (core/consultar-tempo :lat-lon lat-lon))]
+       (informacoes-relevantes consulta-do-tempo))
+     f-desc
+     (when-not (nil? cidade)
+       (->>
+        (core/consultar-wiki cidade)
+        (array-map "Mais informações")))
+     cidade
+     (if (nil? cidade)
+       "(não identificada)"
+       cidade)]
+    (->
+      (conj f-tempo-relevante {"Cidade" cidade} f-desc)
+      (formatar)
+      (println))))
+
+(defn -main-noThread
+  [& args]
+  (let
+    [ {:keys [options arguments errors summary]}
+      (parse-opts args cli-options)
+      cidade
+      (:city options)
+      lat-lon
+      (:local options)]
+    (if (nil? cidade)
+      (let
+        [ local-ip
+          (if (empty? lat-lon)
+            (core/consultar-local)
+            nil)
+          lat-lon
+          (if (nil? local-ip)
+            lat-lon
+            (string/split (:loc local-ip) #","))
+          cidade
+            (->
+              (core/consultar-lat-lon lat-lon)
+              (core/cidade-lat-lon))]
+        (print-informacoes-noThread :lat-lon lat-lon :cidade cidade))
+      (if (empty? lat-lon)
+        (print-informacoes-noThread :cidade cidade)
+        (print-informacoes-noThread :lat-lon lat-lon :cidade cidade)))))
+
