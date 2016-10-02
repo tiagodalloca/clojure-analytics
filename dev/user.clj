@@ -1,4 +1,4 @@
-(ns user
+(ns dev.user
   (:require [clojure.tools.namespace.repl :as tnr]
             [clojure.repl :as repl]))
 

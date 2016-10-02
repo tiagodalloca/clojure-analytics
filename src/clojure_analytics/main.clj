@@ -20,7 +20,8 @@
     "Máxima" (str (:temp_max (:main weather)) "ºC")
     "Temperatura atual" (str (:temp (:main weather)) "ºC")
     "Humidade" (str (:humidity (:main weather) ) "%")
-    "Descrição" (string/capitalize (:description (first (:weather weather))))})
+    "Descrição" (string/capitalize (or (:description (first (:weather weather)))
+                                       "Não disponível"))})
 
 (defn formatar
   [mapao]
